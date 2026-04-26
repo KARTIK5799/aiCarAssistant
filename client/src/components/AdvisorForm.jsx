@@ -29,6 +29,20 @@ const SparkleIcon = ({ className = "" }) => (
   </svg>
 );
 
+const SpinnerIcon = ({ className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="3"
+    strokeLinecap="round"
+    className={`animate-spin ${className}`}
+  >
+    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+  </svg>
+);
+
 const ChevronDownIcon = ({ className = "" }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -140,8 +154,13 @@ export default function AdvisorForm({ onSubmit, loading = false }) {
         type="submit"
         disabled={!isValid || loading}
         className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 px-6 py-4 text-lg font-semibold text-white shadow-sm transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+        aria-busy={loading}
       >
-        <SparkleIcon className="h-5 w-5" />
+        {loading ? (
+          <SpinnerIcon className="h-5 w-5" />
+        ) : (
+          <SparkleIcon className="h-5 w-5" />
+        )}
         {loading ? "Finding your matches..." : "Get Recommendation"}
       </button>
 

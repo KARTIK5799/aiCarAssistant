@@ -55,14 +55,32 @@ function App() {
             )}
 
             {loading && (
-              <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-                {[0, 1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="h-72 animate-pulse rounded-3xl border border-slate-200 bg-slate-50"
-                  />
-                ))}
-              </div>
+              <>
+                <div className="mt-8 flex items-center justify-center gap-3 text-slate-500">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    className="h-5 w-5 animate-spin text-orange-500"
+                  >
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                  <span className="text-sm">
+                    Asking the AI for your top picks…
+                  </span>
+                </div>
+                <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="h-72 animate-pulse rounded-3xl border border-slate-200 bg-slate-50"
+                    />
+                  ))}
+                </div>
+              </>
             )}
 
             {!loading && !error && cars.length === 0 && (

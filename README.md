@@ -8,9 +8,11 @@ The frontend collects three inputs, the backend builds a structured prompt, call
 
 ## Live demo
 
-- **Frontend:** https://aicarassistant.vercel.app *(replace with your URL)*
-- **Backend:** https://aicarassistant.onrender.com *(replace with your URL)*
-- **Health check:** `GET /ping`
+- **Frontend:** https://ai-car-assistant-pearl.vercel.app/
+- **Backend:** https://aicarassistant.onrender.com
+- **Health check:** [https://aicarassistant.onrender.com/ping](https://aicarassistant.onrender.com/ping)
+
+> The backend is on Render's free tier and spins down after ~15 min of inactivity. The first request after a cold start can take ~50s — hit `/ping` once to wake it before using the app.
 
 ---
 
@@ -20,7 +22,7 @@ The frontend collects three inputs, the backend builds a structured prompt, call
 |---|---|
 | Frontend | React 19 + Vite, Tailwind CSS v4, Axios |
 | Backend | Node.js + Express 5 (ESM) |
-| AI | Google Gemini (`gemini-2.0-flash`) via `@google/generative-ai` |
+| AI | Google Gemini (`gemini-2.5-flash`) via `@google/generative-ai` |
 | Hosting | Vercel (frontend) + Render (backend) |
 
 ---
@@ -190,7 +192,7 @@ Returns up to 3 car recommendations.
 |---|---|---|
 | 400 | `{"error":"budgetMax (positive number > budgetMin)..."}` | Validation failed |
 | 429 | `{"error":"Too many requests..."}` | Rate limit (20/min/IP) hit |
-| 500 | `{"error":"Failed to generate recommendations"}` | Gemini call failed (check server logs) |
+| 500 | `{"error":"Failed to generate recommendations"}` | Gemini call failed — check server logs for `finishReason` / `parseJSON failed` lines |
 
 ### `GET /ping`
 
@@ -246,8 +248,8 @@ Health check. Returns `{ status, time }`.
 4. The Gemini service combines that prompt with a baked-in **system instruction** (Indian market advisor persona) and calls the model with:
    - `responseMimeType: "application/json"` — guaranteed JSON output
    - `responseSchema` — guaranteed shape (no fence stripping needed)
-   - `temperature: 0.5`, `maxOutputTokens: 1536` — tight + bounded
-   - 15-second timeout via `Promise.race`
+   - `temperature: 0.5`, `maxOutputTokens: 8192` — sized for `gemini-2.5-flash`'s thinking budget so the JSON isn't truncated
+   - 45-second timeout via `Promise.race`
 5. Response is parsed and returned to the client; `Carcard` renders title, price range, description, pros, and cons.
 
 ---
@@ -259,6 +261,8 @@ Health check. Returns `{ status, time }`.
 | Frontend `process is not defined` | Used `process.env.X` instead of `import.meta.env.VITE_X` | See [client/src/api/api.js](client/src/api/api.js) |
 | 400 on `/api/recommend` | Sending old `budget` field, server expects `budgetMin`/`budgetMax` | Make sure both client and server are on the latest schema |
 | 500 on `/api/recommend` | Missing/invalid `GEMINI_API_KEY` on the server | Check Render logs; add the key in Environment tab |
+| UI shows "No matches found" but logs look fine | Gemini hit `MAX_TOKENS` mid-JSON (thinking ate the budget) — server logs print `finishReason=MAX_TOKENS` | Raise `maxOutputTokens` further or switch to `gemini-2.0-flash` (no thinking overhead) |
+| `[404 Not Found] models/gemini-1.5-flash...` | Model retired by Google on `v1beta` | Already fixed — service uses `gemini-2.5-flash`. Pick a current model from `GET /v1beta/models` if needed |
 | Render free tier cold start (~50s) | Free instance spun down | Upgrade to Starter, or ping every 10 min |
 | CORS error from Vercel → Render | Origin restricted in `cors()` config | Server uses `cors()` (open) by default — fine |
 
