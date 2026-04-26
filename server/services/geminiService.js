@@ -1,10 +1,10 @@
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
-const SYSTEM_INSTRUCTION = `You are an expert automotive advisor specialized in the Indian car market. You recommend cars based on the user's budget, primary usage, and family size.
+const SYSTEM_INSTRUCTION = `You are an expert automotive advisor specialized in the Indian car market. You recommend cars based on the user's budget range, primary usage, and family size.
 
 Guidelines:
 - Recommend ONLY real, currently available cars in the user's specified country (default: India).
-- Every recommendation MUST be within the user's budget. Treat the budget as the on-road price ceiling.
+- Every recommendation MUST fit within the user's budget range (treat the budget as the on-road price ceiling).
 - For India, prefer popular and reliable brands: Maruti Suzuki, Tata, Hyundai, Mahindra, Kia, Toyota, Honda, Skoda, Volkswagen, MG. Include EV options where relevant (Tata, MG, Hyundai).
 - Match body type and seating to family size and usage:
   - 1-2 members + city commute: hatchback or compact sedan.
@@ -12,8 +12,12 @@ Guidelines:
   - 5+ members or family trips: 7-seater SUV or MPV.
   - Off-road / highway: SUV with strong drivetrain (AWD/4WD when relevant).
 - Mix new and reliable used options if it gives the user better value within budget.
-- It is better to return 1 strong match than 5 mediocre ones. If the budget is unrealistic for the country, return an empty cars array.
-- Estimated prices are approximate on-road prices in the user's currency.`;
+- Return up to 3 strong matches. It is better to return 1 great match than 3 mediocre ones. If the budget is unrealistic for the country, return an empty cars array.
+- For each car provide:
+  - priceRangeLow / priceRangeHigh: realistic on-road price range in user's currency.
+  - description: 1-2 sentence pitch about why this car fits.
+  - pros: exactly 3 short positive bullet points (max 6 words each).
+  - cons: exactly 2 short negative bullet points (max 6 words each).`;
 
 const carRecommendationSchema = {
   type: SchemaType.OBJECT,
@@ -25,24 +29,33 @@ const carRecommendationSchema = {
         properties: {
           make: { type: SchemaType.STRING },
           model: { type: SchemaType.STRING },
-          year: { type: SchemaType.INTEGER },
-          estimatedPrice: { type: SchemaType.NUMBER },
+          priceRangeLow: { type: SchemaType.NUMBER },
+          priceRangeHigh: { type: SchemaType.NUMBER },
           currency: { type: SchemaType.STRING },
           bodyType: { type: SchemaType.STRING },
           seatingCapacity: { type: SchemaType.INTEGER },
           fuelType: { type: SchemaType.STRING },
           transmission: { type: SchemaType.STRING },
-          condition: { type: SchemaType.STRING },
-          whyItFits: { type: SchemaType.STRING },
+          description: { type: SchemaType.STRING },
+          pros: {
+            type: SchemaType.ARRAY,
+            items: { type: SchemaType.STRING },
+          },
+          cons: {
+            type: SchemaType.ARRAY,
+            items: { type: SchemaType.STRING },
+          },
         },
         required: [
           "make",
           "model",
-          "year",
-          "estimatedPrice",
+          "priceRangeLow",
+          "priceRangeHigh",
           "currency",
           "fuelType",
-          "whyItFits",
+          "description",
+          "pros",
+          "cons",
         ],
       },
     },
@@ -64,7 +77,7 @@ const getModel = () => {
       responseMimeType: "application/json",
       responseSchema: carRecommendationSchema,
       temperature: 0.5,
-      maxOutputTokens: 1024,
+      maxOutputTokens: 1536,
     },
   });
   return cachedModel;

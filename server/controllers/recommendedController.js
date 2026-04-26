@@ -1,40 +1,52 @@
 import { getCarRecommendations } from "../services/geminiService.js";
 import parseJSON from "../utils/parseJSON.js";
 
-const buildPrompt = ({ budget, usage, familyMembers, currency, country }) =>
+const buildPrompt = ({
+  budgetMin,
+  budgetMax,
+  usage,
+  familyMembers,
+  currency,
+  country,
+}) =>
   `Country: ${country}
-Budget: ${budget} ${currency}
+Budget range: ${budgetMin} - ${budgetMax} ${currency}
 Primary usage: ${usage}
 Family members (passengers needed): ${familyMembers}
 
-Recommend up to 5 cars that best match these inputs.`;
+Recommend up to 3 cars that best match these inputs.`;
 
 export const recommendedCars = async (req, res) => {
     const {
-        budget,
+        budgetMin = 0,
+        budgetMax,
         usage,
         familyMembers,
         currency = "INR",
         country = "India",
     } = req.body;
 
-    const numericBudget = Number(budget);
+    const numericBudgetMin = Number(budgetMin);
+    const numericBudgetMax = Number(budgetMax);
     const numericFamily = Number(familyMembers);
 
     if (
-        !Number.isFinite(numericBudget) || numericBudget <= 0 ||
+        !Number.isFinite(numericBudgetMax) || numericBudgetMax <= 0 ||
+        !Number.isFinite(numericBudgetMin) || numericBudgetMin < 0 ||
+        numericBudgetMin >= numericBudgetMax ||
         typeof usage !== "string" || !usage.trim() ||
         !Number.isInteger(numericFamily) || numericFamily <= 0 || numericFamily > 20
     ) {
         return res.status(400).json({
             error:
-                "budget (positive number), usage (non-empty string), and familyMembers (positive integer up to 20) are required",
+                "budgetMax (positive number > budgetMin), usage (non-empty string), and familyMembers (positive integer up to 20) are required",
         });
     }
 
     try {
         const prompt = buildPrompt({
-            budget: numericBudget,
+            budgetMin: numericBudgetMin,
+            budgetMax: numericBudgetMax,
             usage: usage.trim(),
             familyMembers: numericFamily,
             currency,
