@@ -18,6 +18,13 @@ const apiLimiter = rateLimit({
     message: { error: "Too many requests, please try again later." },
 });
 
+app.get("/ping", (req, res) => {
+  res.status(200).json({
+    status: "alive",
+    time: new Date()
+  });
+});
+
 app.use('/api', apiLimiter, routes);
 
 app.listen(PORT, () => {
