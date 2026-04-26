@@ -71,7 +71,7 @@ const getModel = () => {
   }
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   cachedModel = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
+    model: "gemini-1.5-flash",
     systemInstruction: SYSTEM_INSTRUCTION,
     generationConfig: {
       responseMimeType: "application/json",
