@@ -4,7 +4,8 @@ export default function parseJSON(text, fallback = { cars: [] }) {
     const cleaned = text.replace(/```(?:json)?/gi, "").trim();
     const match = cleaned.match(/[\[{][\s\S]*[\]}]/);
     return JSON.parse(match ? match[0] : cleaned);
-  } catch {
+  } catch (err) {
+    console.error("parseJSON failed:", err.message, "| text was:", text?.slice(0, 500));
     return fallback;
   }
 }

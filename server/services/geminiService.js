@@ -71,19 +71,19 @@ const getModel = () => {
   }
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   cachedModel = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
     systemInstruction: SYSTEM_INSTRUCTION,
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: carRecommendationSchema,
       temperature: 0.5,
-      maxOutputTokens: 1536,
+      maxOutputTokens: 8192,
     },
   });
   return cachedModel;
 };
 
-const TIMEOUT_MS = 15_000;
+const TIMEOUT_MS = 45_000;
 const withTimeout = (promise, ms) =>
   Promise.race([
     promise,
@@ -100,5 +100,10 @@ export const getCarRecommendations = async (prompt) => {
     getModel().generateContent(prompt),
     TIMEOUT_MS,
   );
-  return result.response.text();
+  const finishReason = result.response.candidates?.[0]?.finishReason;
+  const usage = result.response.usageMetadata;
+  const text = result.response.text();
+  console.log(`Gemini finishReason=${finishReason} length=${text?.length} usage=`, usage);
+  console.log("Gemini full response:\n", text);
+  return text;
 };
